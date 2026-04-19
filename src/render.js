@@ -108,6 +108,86 @@ function renderBanner(highest, width) {
   return `${BOLD}${color}${line}${RESET}`;
 }
 
+// ── Number formatting ───────────────────────────────────────────
+function fmtCount(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'k';
+  return String(n);
+}
+
+// ── TODO (you): render the stats panel ──────────────────────────
+//
+// Called below the limit rows. `stats` has this shape (see src/stats.js):
+//
+//   {
+//     window: { since, until },           // epoch ms — currently "today"
+//     tokens: { input, output, cache_read, cache_creation, total },
+//     byModel: { 'claude-opus-4-7': { tokens, messages }, ... },
+//     byTool:  { 'Bash': 92, 'Read': 11, ... },
+//     byMcp:   { 'playwright': 38, ... },
+//     bySkill: { 'brainstorming': 3, ... },
+//     sessionCount: 3,
+//     messageCount: 390,
+//     filesScanned: 4,
+//     scanMs: 492,
+//   }
+//
+// Design choices to shape the panel (this is where your taste matters):
+//   - Horizontal (key: value  key: value  key: value) or vertical list?
+//   - Top-N only for tools, or all?
+//   - Show cache_read (free-ish but huge) prominently, or fold it?
+//   - Sort MCP/skills by count desc or alphabetical?
+//   - Token split: Opus-only, or percentage across all models?
+//
+// Return an array of ANSI-colored strings (one per line). Empty array = hide.
+// Helpers: fmtCount, colorForPct, BOLD, DIM, RESET, fg.
+function renderStats(stats, width) {
+  // TODO: implement. Placeholder gives you a working starting point.
+  if (!stats || stats.messageCount === 0) return [];
+
+  const lines = [];
+  lines.push(`${BOLD}Today${RESET}  ${DIM}(${stats.sessionCount} session${stats.sessionCount === 1 ? '' : 's'}, ${stats.messageCount} msgs, scan ${stats.scanMs}ms)${RESET}`);
+
+  // Tokens
+  const t = stats.tokens;
+  lines.push(
+    `${DIM}tokens${RESET}  ` +
+    `${fg(120)}in ${fmtCount(t.input)}${RESET}  ` +
+    `${fg(220)}out ${fmtCount(t.output)}${RESET}  ` +
+    `${fg(117)}cache+ ${fmtCount(t.cache_creation)}${RESET}  ` +
+    `${DIM}cache_rd ${fmtCount(t.cache_read)}${RESET}`
+  );
+
+  // Top 5 tools
+  const topTools = Object.entries(stats.byTool).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (topTools.length) {
+    lines.push(`${DIM}tools${RESET}   ` + topTools.map(([k, v]) => `${k} ${DIM}${v}${RESET}`).join('  '));
+  }
+
+  // MCP servers
+  const mcps = Object.entries(stats.byMcp).sort((a, b) => b[1] - a[1]);
+  if (mcps.length) {
+    lines.push(`${DIM}mcp${RESET}     ` + mcps.map(([k, v]) => `${k} ${DIM}${v}${RESET}`).join('  '));
+  }
+
+  // Skills
+  const skills = Object.entries(stats.bySkill).sort((a, b) => b[1] - a[1]);
+  if (skills.length) {
+    lines.push(`${DIM}skills${RESET}  ` + skills.map(([k, v]) => `${k} ${DIM}${v}${RESET}`).join('  '));
+  }
+
+  // Models (if >1 in play)
+  const models = Object.entries(stats.byModel).sort((a, b) => b[1].tokens - a[1].tokens);
+  if (models.length > 1) {
+    lines.push(`${DIM}models${RESET}  ` + models.map(([k, v]) => {
+      const short = k.replace('claude-', '').replace(/-\d+$/, '');
+      return `${short} ${DIM}${fmtCount(v.tokens)} / ${v.messages}m${RESET}`;
+    }).join('  '));
+  }
+
+  return lines;
+}
+
 // ── Frame assembly ──────────────────────────────────────────────
 function render(state) {
   const width = process.stdout.columns || 80;
@@ -155,6 +235,16 @@ function render(state) {
   if (highest && highest.limit.utilization >= 80) {
     lines.push('');
     lines.push(renderBanner(highest, width));
+  }
+
+  // Stats panel (today's local activity, from ~/.claude transcripts)
+  if (state.stats) {
+    const statLines = renderStats(state.stats, width);
+    if (statLines.length) {
+      lines.push('');
+      lines.push(`${DIM}${'─'.repeat(Math.min(width, 60))}${RESET}`);
+      lines.push(...statLines);
+    }
   }
 
   // Extra-usage footer (monthly $ cap, if plan has it)
