@@ -1,0 +1,16 @@
+{
+  "name": "claude-dash-cli",
+  "version": "0.1.0",
+  "description": "Terminal dashboard for Claude usage limits. Forked from claude-dash (Electron) — for tmux panes.",
+  "bin": {
+    "claude-dash-cli": "bin/claude-dash-cli"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
