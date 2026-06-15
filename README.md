@@ -11,13 +11,29 @@ Fork of [claude-dash](https://github.com/adelhelalpro-ai/claude-dash) — same p
 
 ## Install
 
+To run `claude-dash-cli` from **any directory**, link it globally:
+
 ```bash
 cd claude-dash-cli
 chmod +x bin/claude-dash-cli
-npm link        # optional: exposes `claude-dash-cli` globally
+npm link
 ```
 
-Or just run directly:
+`npm link` symlinks the `bin` entry into your global npm path (already on `PATH`), so edits to `src/` are picked up live — no reinstall needed. Then run it anywhere:
+
+```bash
+claude-dash-cli
+```
+
+Verify the link:
+
+```bash
+which claude-dash-cli   # prints the symlink path
+```
+
+> **nvm note:** the symlink lives under the active Node version. If you `nvm use` a different version, re-run `npm link` there. To remove it later: `npm unlink -g claude-dash-cli`.
+
+Or skip linking and run directly:
 
 ```bash
 node src/index.js
