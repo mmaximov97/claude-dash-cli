@@ -4,6 +4,39 @@ Terminal dashboard for Claude usage limits. Made for a tmux pane.
 
 Fork of [claude-dash](https://github.com/adelhelalpro-ai/claude-dash) — same prediction engine (EWMA + multi-horizon consensus), no Electron, zero dependencies.
 
+## What it looks like
+
+A live text capture of the dashboard (`node src/index.js`, 80-column pane):
+
+```text
+claude-dash-cli  11:17:45  (polls every 5m)
+
+5H         ████░░░░░░░░░░░░░░░░░░░░░  15.0% reset 3h12m  eta 3h33m ○
+7D         █░░░░░░░░░░░░░░░░░░░░░░░░   2.0% reset 2d2h  eta — ·
+Sonnet 7D  ░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% reset now  eta — ·
+
+────────────────────────────────────────────────────────────
+Today  (4 sessions, 314 msgs, scan 57ms)
+tokens  in 231.7k  out 433.6k  cache+ 1.0M  cache_rd 20.7M
+tools   Bash 67  Read 17  Agent 10  Edit 9  ToolSearch 7
+mcp     playwright 13
+skills  bugreport-to-tasks 1  skill-creator:skill-creator 1  skill-creator 1
+models  opus-4 1.7M / 313m  <synthetic> 0 / 1m
+
+extra usage: off
+```
+
+The top block is your **plan limits** (live from the usage API); the bottom block is **today's local activity** scanned from your `~/.claude` transcripts. In a real terminal the bars are color-ramped green→yellow→red and a `WARNING`/`CRITICAL` strip appears once a limit crosses 80% / 95%.
+
+## Why
+
+You're coding in the terminal and you don't want to discover you've hit a usage wall mid-task. claude-dash-cli answers two questions at a glance, without leaving tmux:
+
+- **How much runway is left?** — utilization per rolling window (5H / 7D / per-model), the reset countdown, and an EWMA-predicted **ETA to 100%** so you can pace a long session or take a break before a hard stop.
+- **Where did today's budget go?** — tokens, top tools, MCP servers, skills, and models pulled straight from your transcripts, so you can see what's actually burning context.
+
+It's a single always-on pane: zero dependencies, shares Claude Code's login (no separate auth), and stays out of the way until a limit gets close.
+
 ## Requirements
 
 - Node.js ≥ 18
