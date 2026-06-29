@@ -2,10 +2,35 @@
   "name": "claude-dash-cli",
   "version": "0.1.0",
   "description": "Terminal dashboard for Claude usage limits. Forked from claude-dash (Electron) — for tmux panes.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "usage",
+    "dashboard",
+    "cli",
+    "tmux",
+    "terminal"
+  ],
+  "homepage": "https://github.com/mmaximov97/claude-dash-cli#readme",
+  "bugs": {
+    "url": "https://github.com/mmaximov97/claude-dash-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmaximov97/claude-dash-cli.git"
+  },
+  "author": "Mikhail Maksimov",
   "bin": {
     "claude-dash-cli": "bin/claude-dash-cli"
   },
   "main": "src/index.js",
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node src/index.js"
   },
