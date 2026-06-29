@@ -6,6 +6,26 @@ const { render, HIDE_CURSOR, SHOW_CURSOR } = require('./render');
 const REDRAW_MS = 1000;
 const STATS_REFRESH_MS = 60_000;
 
+// ── Subcommand dispatch ─────────────────────────────────────────
+// `claude-dash-cli`            → live dashboard (default, below)
+// `claude-dash-cli reflect …`  → one-shot retrospective report
+const sub = process.argv[2];
+if (sub === 'reflect') {
+  require('./reflect').run(process.argv.slice(3)).then((code) => process.exit(code || 0));
+  return;
+}
+if (sub === '-h' || sub === '--help') {
+  process.stdout.write(
+    'claude-dash-cli — Claude usage dashboard\n\n' +
+    'Usage:\n' +
+    '  claude-dash-cli            live usage dashboard (for a tmux pane)\n' +
+    '  claude-dash-cli reflect    retrospective scan of your sessions\n' +
+    '  claude-dash-cli --help     this help\n\n' +
+    'Run `claude-dash-cli reflect --help` for retrospective options.\n'
+  );
+  process.exit(0);
+}
+
 function main() {
   const auth = new AuthManager();
   const tracker = new UsageTracker(auth);

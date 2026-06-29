@@ -20,6 +20,7 @@ Fork of [claude-dash](https://github.com/adelhelalpro-ai/claude-dash) — same p
 - **Live limit tracking** — utilization per rolling window (5H / 7D / per-model), each with a reset countdown.
 - **ETA to 100%** — an EWMA-predicted time-to-limit so you can pace a long session or break before a hard stop. A confidence glyph (`●` `◐` `○` `·`) tells you how much to trust it.
 - **Today's activity panel** — tokens, top tools, MCP servers, skills, and models, scanned straight from your `~/.claude` transcripts.
+- **`reflect` retrospective** — a one-shot report (`claude-dash-cli reflect`) that wraps up what you did: sessions, projects, tool usage, and a time-of-day histogram, à la Claude Code's `/insights`. JSON output for piping.
 - **Warning / Critical banner** — a full-width strip appears once any limit crosses 80% / 95%.
 - **Color-ramped bars** — green → yellow → red by utilization.
 - **Zero dependencies** — plain Node.js, ~900 lines. Easy to read, easy to fork.
@@ -62,6 +63,23 @@ extra usage: off
 ```
 
 </details>
+
+## Retrospective: `reflect`
+
+The live dashboard answers *"how close am I to a limit?"*. `reflect` answers *"what did I actually do?"* — a one-shot, pipeable report scanned from your local transcripts. It's the terminal, zero-dependency cousin of Claude Code's `/insights` (the quantitative half — no AI-written prose).
+
+```bash
+claude-dash-cli reflect                  # today
+claude-dash-cli reflect --since 7d        # last 7 days
+claude-dash-cli reflect --since 30d
+claude-dash-cli reflect --since all
+claude-dash-cli reflect sessions          # just one section
+claude-dash-cli reflect --format json     # raw data for scripting
+```
+
+![claude-dash-cli reflect — a 7-day retrospective](docs/screenshots/reflect.png)
+
+Sections: **overview** (sessions, messages, tokens, days active + a time-of-day histogram), **projects** (what you worked on, grouped by directory), **tools** (tool / MCP / skill usage), and **sessions** (a per-session timeline). Pass a section name to show only that one. Window defaults to **today**; override with `--since today|7d|30d|all|YYYY-MM-DD`.
 
 ## Requirements
 
@@ -133,11 +151,12 @@ Each row shows utilization, the rolling-window reset countdown, and the EWMA-pre
 ## How it works
 
 ```
-bin/claude-dash-cli → src/index.js          # poll + redraw loop, signal handling
+bin/claude-dash-cli → src/index.js          # subcommand dispatch + poll/redraw loop
                        ├─ src/auth.js        # reads ~/.claude credentials, rotates tokens on 429
                        ├─ src/usage.js       # fetches the usage API, EWMA prediction engine
                        ├─ src/stats.js       # scans local transcripts for today's activity
-                       └─ src/render.js      # turns state into the ANSI frame you see
+                       ├─ src/render.js      # turns dashboard state into the ANSI frame
+                       └─ src/reflect.js     # the `reflect` retrospective (scan → aggregate → render)
 ```
 
 - `index.js` runs two timers: a 5-minute usage poll and a 1-second redraw, plus a 60-second transcript rescan.
@@ -157,6 +176,12 @@ The whole point of the fork is that these are yours to shape.
 ## Contributing
 
 Issues and PRs welcome. The codebase is small and dependency-free by design — please keep it that way (no runtime `dependencies` in `package.json`). When changing the rendering, a screenshot of before/after helps a lot.
+
+Tests use the built-in Node test runner (no deps):
+
+```bash
+npm test            # runs node --test over tests/
+```
 
 ## Credits
 
