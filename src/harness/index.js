@@ -16,9 +16,12 @@ function discoverAll({
     ...claude.discoverSessions({ ...opts, projectsDir: claudeDir }),
     ...codex.discoverSessions({ ...opts, sessionsDir: codexDir }),
   ];
-  sessions.sort((a, b) =>
-    (RANK[a.status] - RANK[b.status]) || ((b.lastActivity || 0) - (a.lastActivity || 0)));
-  return sessions;
+  return sortSessions(sessions);
 }
 
-module.exports = { discoverAll };
+function sortSessions(sessions) {
+  return sessions.sort((a, b) =>
+    ((RANK[a.status] ?? 3) - (RANK[b.status] ?? 3)) || ((b.lastActivity || 0) - (a.lastActivity || 0)));
+}
+
+module.exports = { discoverAll, sortSessions };

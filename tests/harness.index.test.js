@@ -2,7 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
-const { discoverAll } = require('../src/harness');
+const { discoverAll, sortSessions } = require('../src/harness');
 
 const CLAUDE = path.join(__dirname, 'fixtures', 'claude');
 const CODEX = path.join(__dirname, 'fixtures', 'codex');
@@ -18,4 +18,14 @@ test('discoverAll merges both harnesses and sorts live-first', () => {
   for (let i = 1; i < all.length; i++) {
     assert.ok(rank[all[i - 1].status] <= rank[all[i].status]);
   }
+});
+
+test('sortSessions ranks live<idle<done<null and null-status sorts last despite recency', () => {
+  const out = sortSessions([
+    { id: 'd', status: 'done', lastActivity: 5 },
+    { id: 'n', status: null,   lastActivity: 9 },  // most recent, but unranked
+    { id: 'l', status: 'live', lastActivity: 1 },
+    { id: 'i', status: 'idle', lastActivity: 3 },
+  ]);
+  assert.deepStrictEqual(out.map((s) => s.id), ['l', 'i', 'd', 'n']);
 });

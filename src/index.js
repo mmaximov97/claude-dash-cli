@@ -15,10 +15,15 @@ if (sub === 'reflect') {
   return;
 }
 if (sub === 'watch') {
-  const { createLimitSource } = require('./watch/limit-source');
-  import('./watch/ui.mjs')
-    .then(({ run }) => { run({ limitSource: createLimitSource() }); })
-    .catch((e) => { process.stderr.write('watch failed: ' + e.message + '\n'); process.exit(1); });
+  try {
+    const { createLimitSource } = require('./watch/limit-source');
+    import('./watch/ui.mjs')
+      .then(({ run }) => { run({ limitSource: createLimitSource() }); })
+      .catch((e) => { process.stderr.write('watch failed: ' + e.message + '\n'); process.exit(1); });
+  } catch (e) {
+    process.stderr.write('watch failed: ' + e.message + '\n');
+    process.exit(1);
+  }
   return;
 }
 if (sub === '-h' || sub === '--help') {

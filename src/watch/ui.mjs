@@ -55,11 +55,12 @@ function StatusBar({ sessions, limitInfo, err }) {
 }
 
 function DetailPane({ node }) {
+  const u = node.rollup || node.usage || {};
   return html`
     <${Box} flexDirection="column" borderStyle="round" borderColor="gray" paddingX=${1}>
       <${Text} bold>${node.harness}:${node.kind} ${node.id}</>
       <${Text} color="gray">cwd: ${node.cwd || '—'}  model: ${node.model || '—'}</>
-      <${Text} color="gray">status: ${node.status}  in ${fmtTokens((node.rollup || node.usage).in)} · out ${fmtTokens((node.rollup || node.usage).out)}</>
+      <${Text} color="gray">status: ${node.status}  in ${fmtTokens(u.in)} · out ${fmtTokens(u.out)}</>
     </>`;
 }
 

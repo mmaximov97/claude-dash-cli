@@ -149,10 +149,12 @@ Usage roll-up: `rollup = own + Σ children.rollup`.
 
 `poller` (every ~2s) → `adapters.discoverSessions(window)` → normalized trees →
 Ink app state → render. Polling, not `fs.watch`, to match the existing
-1s loop and keep it simple. Incremental: only files whose `mtime`/size changed
-are re-read; parsed per-file usage is cached keyed by `(path, size)` and only
-the appended byte range is re-parsed. Large rollouts (a 13 MB Codex file was
-observed) are never loaded whole.
+1s loop and keep it simple. MVP re-reads a changed file whole and re-parses
+it, memoised by `(size, mtimeMs)` so unchanged files are never re-read.
+**Deferred follow-up:** incremental tail-parse of only the appended byte
+range, plus cache eviction for deleted transcripts — needed before a very
+large actively-written rollout (13 MB observed) is watched at the 2s poll
+cadence.
 
 ## Interaction (Ink)
 
@@ -179,8 +181,9 @@ limit.
 - Missing harness directory → adapter yields nothing, no crash.
 - Malformed / truncated final JSONL line (file being written) → skip line,
   continue parsing.
-- Large rollout files → incremental tail-parse with `(path, size)` cache; never
-  read whole file into memory.
+- Large rollout files → whole-file re-read memoised by `(size, mtimeMs)`, so
+  an unchanged file is never re-read. Incremental tail-parse (only the
+  appended byte range) is a deferred follow-up, not yet implemented.
 
 ## Testing
 
