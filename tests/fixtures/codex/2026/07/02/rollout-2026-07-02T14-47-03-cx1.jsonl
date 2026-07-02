@@ -1,0 +1,3 @@
+{"type":"session_meta","timestamp":"2026-07-02T14:47:03.000Z","payload":{"id":"cx1","cwd":"/home/proj","model":"gpt-5-codex","session_id":"cx1"}}
+{"type":"event_msg","timestamp":"2026-07-02T14:47:10.000Z","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":1000,"cached_input_tokens":400,"output_tokens":200,"reasoning_output_tokens":50,"total_tokens":1250}}}}
+{"type":"event_msg","timestamp":"2026-07-02T14:48:00.000Z","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":3000,"cached_input_tokens":900,"output_tokens":500,"reasoning_output_tokens":100,"total_tokens":3600}}}}
