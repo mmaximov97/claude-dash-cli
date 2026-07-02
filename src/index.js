@@ -14,11 +14,19 @@ if (sub === 'reflect') {
   require('./reflect').run(process.argv.slice(3)).then((code) => process.exit(code || 0));
   return;
 }
+if (sub === 'watch') {
+  const { createLimitSource } = require('./watch/limit-source');
+  import('./watch/ui.mjs')
+    .then(({ run }) => { run({ limitSource: createLimitSource() }); })
+    .catch((e) => { process.stderr.write('watch failed: ' + e.message + '\n'); process.exit(1); });
+  return;
+}
 if (sub === '-h' || sub === '--help') {
   process.stdout.write(
     'claude-dash-cli — Claude usage dashboard\n\n' +
     'Usage:\n' +
     '  claude-dash-cli            live usage dashboard (for a tmux pane)\n' +
+    '  claude-dash-cli watch      interactive multi-harness session tree (Claude + Codex)\n' +
     '  claude-dash-cli reflect    retrospective scan of your sessions\n' +
     '  claude-dash-cli --help     this help\n\n' +
     'Run `claude-dash-cli reflect --help` for retrospective options.\n'
