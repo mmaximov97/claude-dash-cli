@@ -14,7 +14,11 @@ function addUsage(a, b) {
 }
 
 function classifyStatus(lastActivity, now, opts = {}) {
-  const { liveMs, idleMs, windowMs } = { ...DEFAULTS, ...opts };
+  const merged = { ...DEFAULTS };
+  for (const k of Object.keys(opts)) {
+    if (opts[k] !== undefined) merged[k] = opts[k];
+  }
+  const { liveMs, idleMs, windowMs } = merged;
   const age = now - (lastActivity ?? 0);
   if (age <= liveMs) return 'live';
   if (age <= idleMs) return 'idle';

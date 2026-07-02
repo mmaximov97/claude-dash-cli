@@ -46,3 +46,24 @@ test('fmtTokens is human-readable', () => {
   assert.strictEqual(fmtTokens(1234), '1.2k');
   assert.strictEqual(fmtTokens(2_000_000), '2.0M');
 });
+
+test('classifyStatus ignores explicit undefined opts (defaults win)', () => {
+  const now = 1_000_000_000;
+  // caller forwards all-undefined optional params → must still use DEFAULTS
+  assert.strictEqual(classifyStatus(now - 5_000, now, { liveMs: undefined, idleMs: undefined, windowMs: undefined }), 'live');
+  assert.strictEqual(classifyStatus(now - 3_600_000, now, { windowMs: undefined }), 'done');
+});
+
+test('classifyStatus band edges are inclusive (<=)', () => {
+  const now = 1_000_000_000;
+  const opts = { liveMs: 30_000, idleMs: 300_000, windowMs: 21_600_000 };
+  assert.strictEqual(classifyStatus(now - 30_000, now, opts), 'live');   // exactly liveMs
+  assert.strictEqual(classifyStatus(now - 300_000, now, opts), 'idle');  // exactly idleMs
+  assert.strictEqual(classifyStatus(now - 21_600_000, now, opts), 'done'); // exactly windowMs
+});
+
+test('classifyStatus treats missing lastActivity as very old', () => {
+  const now = 1_000_000_000;
+  assert.strictEqual(classifyStatus(null, now, {}), null);
+  assert.strictEqual(classifyStatus(undefined, now, {}), null);
+});
