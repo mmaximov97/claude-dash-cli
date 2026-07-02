@@ -18,19 +18,20 @@ function createPoller({
 
     // Check if sessions is a Promise
     if (sessions instanceof Promise) {
-      sessions
-        .then(s => {
+      sessions.then(
+        s => {
           if (!stopped) {
             onUpdate(s, null);
             if (!stopped) timer = setTimeoutFn(tick, intervalMs);
           }
-        })
-        .catch(e => {
+        },
+        e => {
           if (!stopped) {
             onUpdate(null, e);
             if (!stopped) timer = setTimeoutFn(tick, intervalMs);
           }
-        });
+        }
+      );
     } else {
       if (!stopped) {
         onUpdate(sessions, err);
