@@ -10,6 +10,11 @@ const { createPoller } = require('./poller.js');
 
 const html = htm.bind(React.createElement);
 
+export function resolveSelIndex(rows, selId) {
+  const i = rows.findIndex((r) => r.node.id === selId);
+  return i < 0 ? 0 : i;
+}
+
 const STATUS_COLOR = { live: 'green', idle: 'yellow', done: 'gray' };
 const STATUS_DOT = { live: '●', idle: '◐', done: '○' };
 
@@ -68,7 +73,7 @@ export function App({ discover, intervalMs = 2000, limitSource = null }) {
   const [sessions, setSessions] = useState([]);
   const [err, setErr] = useState(null);
   const [limitInfo, setLimitInfo] = useState(null);
-  const [sel, setSel] = useState(0);
+  const [selId, setSelId] = useState(null);
   const [expanded, setExpanded] = useState(() => new Set());
   const [showDetail, setShowDetail] = useState(false);
   const { exit } = useApp();
@@ -89,27 +94,22 @@ export function App({ discover, intervalMs = 2000, limitSource = null }) {
   }, [limitSource]);
 
   const rows = flattenVisible(sessions, expanded);
+  const selIndex = resolveSelIndex(rows, selId);
+  const current = rows[selIndex] && rows[selIndex].node;
 
   useInput((input, key) => {
     if (input === 'q' || key.escape) { exit(); return; }
-    if (key.downArrow) setSel((i) => Math.min(Math.max(rows.length - 1, 0), i + 1));
-    if (key.upArrow) setSel((i) => Math.max(0, i - 1));
-    if (key.rightArrow || key.return) {
-      const n = rows[sel] && rows[sel].node;
-      if (n && n.children && n.children.length) setExpanded((s) => new Set(s).add(n.id));
-    }
-    if (key.leftArrow) {
-      const n = rows[sel] && rows[sel].node;
-      if (n) setExpanded((s) => { const c = new Set(s); c.delete(n.id); return c; });
-    }
+    if (key.downArrow) { const ni = Math.min(rows.length - 1, selIndex + 1); if (rows[ni]) setSelId(rows[ni].node.id); }
+    if (key.upArrow) { const ni = Math.max(0, selIndex - 1); if (rows[ni]) setSelId(rows[ni].node.id); }
+    if (key.rightArrow || key.return) { const n = current; if (n && n.children && n.children.length) setExpanded((s) => new Set(s).add(n.id)); }
+    if (key.leftArrow) { const n = current; if (n) setExpanded((s) => { const c = new Set(s); c.delete(n.id); return c; }); }
     if (input === 'd') setShowDetail((v) => !v);
   });
 
-  const current = rows[sel] && rows[sel].node;
   return html`
     <${Box} flexDirection="column">
       <${StatusBar} sessions=${sessions} limitInfo=${limitInfo} err=${err} />
-      <${TreeView} rows=${rows} sel=${sel} />
+      <${TreeView} rows=${rows} sel=${selIndex} />
       ${showDetail && current ? html`<${DetailPane} node=${current} />` : null}
       <${Text} color="gray">↑↓ move · →/Enter expand · ← collapse · d detail · q quit</>
     </>`;
@@ -121,5 +121,10 @@ export function run({ intervalMs = 2000, discover, limitSource = null } = {}) {
     const { discoverAll } = require2('../harness/index.js');
     return discoverAll({ now: Date.now() });
   });
-  return render(html`<${App} discover=${finalDiscover} intervalMs=${intervalMs} limitSource=${limitSource} />`);
+  const app = render(html`<${App} discover=${finalDiscover} intervalMs=${intervalMs} limitSource=${limitSource} />`);
+  app.waitUntilExit().then(() => {
+    if (limitSource) { try { limitSource.stop(); } catch { /* ignore */ } }
+    process.exit(0);
+  });
+  return app;
 }

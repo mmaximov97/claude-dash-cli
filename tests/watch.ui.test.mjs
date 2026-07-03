@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert';
 import React from 'react';
 import { render } from 'ink-testing-library';
-import { App } from '../src/watch/ui.mjs';
+import { App, resolveSelIndex } from '../src/watch/ui.mjs';
 
 const sessions = [{
   harness: 'claude', kind: 'session', id: 'sess-A', project: 'proj',
@@ -26,4 +26,18 @@ test('App renders a session row with project and rolled-up tokens', async () => 
   assert.match(frame, /sess-A|claude/);
   assert.match(frame, /340\.0|340/); // rolled-up input tokens shown somewhere
   unmount();
+});
+
+test('resolveSelIndex follows the node id across a re-sort, falls back to 0 if gone', () => {
+  const rows1 = [{ node: { id: 'a' } }, { node: { id: 'b' } }, { node: { id: 'c' } }];
+  // selection is on 'c' (index 2)
+  assert.strictEqual(resolveSelIndex(rows1, 'c'), 2);
+  // after a re-sort, 'c' moved to index 0 — selection index must follow it
+  const rows2 = [{ node: { id: 'c' } }, { node: { id: 'a' } }, { node: { id: 'b' } }];
+  assert.strictEqual(resolveSelIndex(rows2, 'c'), 0);
+  // if the selected node disappeared, fall back to 0
+  const rows3 = [{ node: { id: 'a' } }, { node: { id: 'b' } }];
+  assert.strictEqual(resolveSelIndex(rows3, 'c'), 0);
+  // null selId (initial) → 0
+  assert.strictEqual(resolveSelIndex(rows1, null), 0);
 });
