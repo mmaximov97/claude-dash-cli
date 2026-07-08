@@ -10,8 +10,6 @@ const MAX_BACKOFF   = 15 * 60_000;
 const HISTORY_DIR = path.join(os.homedir(), '.config', 'claude-dash-cli');
 const HISTORY_PATH = path.join(HISTORY_DIR, 'history.json');
 
-const LIMIT_KEYS = ['five_hour', 'seven_day', 'seven_day_opus', 'seven_day_sonnet', 'seven_day_cowork'];
-
 class UsageTracker {
   constructor(auth) {
     this.auth = auth;
@@ -135,24 +133,41 @@ class UsageTracker {
 
   _enrich(raw) {
     const now = Date.now();
-    const result = { timestamp: now, limits: {}, extra_usage: raw.extra_usage };
+    const result = { timestamp: now, limits: {}, spend: raw.spend, extra_usage: raw.extra_usage };
 
-    for (const key of LIMIT_KEYS) {
-      const limit = raw[key];
-      if (!limit) continue;
-      const resetsAt = new Date(limit.resets_at).getTime();
+    for (const entry of raw.limits || []) {
+      if (!entry) continue;
+      const key = this._limitKey(entry);
+      const resetsAt = new Date(entry.resets_at).getTime();
       const timeToReset = Math.max(0, resetsAt - now);
-      const prediction = this._predict(key, limit.utilization);
+      const prediction = this._predict(key, entry.percent);
       result.limits[key] = {
-        utilization: limit.utilization,
-        resets_at: limit.resets_at,
+        label: this._limitLabel(entry),
+        utilization: entry.percent,
+        resets_at: entry.resets_at,
         timeToReset,
         estimatedTimeToLimit: prediction.eta,
         consumptionRate: prediction.rate,
         confidence: prediction.confidence,
+        isActive: entry.is_active,
+        severity: entry.severity,
       };
     }
     return result;
+  }
+
+  // Stable per-limit key: kind alone, or kind+model when scoped (e.g. 'weekly_scoped:Fable').
+  // Any future per-model weekly limit gets its own key automatically — no hardcoded list.
+  _limitKey(entry) {
+    const model = entry.scope && entry.scope.model && entry.scope.model.display_name;
+    return model ? `${entry.kind}:${model}` : entry.kind;
+  }
+
+  _limitLabel(entry) {
+    if (entry.kind === 'session') return '5H';
+    if (entry.kind === 'weekly_all') return '7D';
+    const model = entry.scope && entry.scope.model && entry.scope.model.display_name;
+    return model ? `${model} 7D` : entry.kind;
   }
 
   // ── Prediction engine (ported verbatim — see ai_dash/src/main/usage.js:151) ──
@@ -272,4 +287,4 @@ class UsageTracker {
   }
 }
 
-module.exports = { UsageTracker, LIMIT_KEYS };
+module.exports = { UsageTracker };
