@@ -41,3 +41,15 @@ test('resolveSelIndex follows the node id across a re-sort, falls back to 0 if g
   // null selId (initial) → 0
   assert.strictEqual(resolveSelIndex(rows1, null), 0);
 });
+
+test('StatusBar renders session limit percentage from limitSource after key rename', async () => {
+  const fakeLimitSource = {
+    start: (cb) => cb({ limits: { session: { utilization: 42 } } }),
+    stop: () => {},
+  };
+  const { lastFrame, unmount } = render(React.createElement(App, { discover: () => [], limitSource: fakeLimitSource, intervalMs: 10_000 }));
+  await new Promise((r) => setTimeout(r, 20));
+  const frame = lastFrame();
+  assert.match(frame, /5h limit: 42%/);
+  unmount();
+});

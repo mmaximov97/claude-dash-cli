@@ -47,7 +47,7 @@ function TreeView({ rows, sel }) {
 function StatusBar({ sessions, limitInfo, err }) {
   const total = sessions.reduce((a, s) => a + ((s.rollup && s.rollup.out) || 0), 0);
   const live = sessions.filter((s) => s.status === 'live').length;
-  const five = limitInfo && limitInfo.limits && limitInfo.limits.five_hour;
+  const five = limitInfo && limitInfo.limits && limitInfo.limits.session;
   const extra = limitInfo && limitInfo.extra_usage;
   return html`
     <${Box} flexDirection="column" marginBottom=${1}>
